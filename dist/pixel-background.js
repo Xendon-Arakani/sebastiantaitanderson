@@ -3,6 +3,7 @@ const HEIGHT = 1072;
 const PIXEL_COUNT = WIDTH * HEIGHT;
 const TICKS_PER_SECOND = 24;
 const TICK_DURATION = 1000 / TICKS_PER_SECOND;
+const MAX_TICKS_PER_FRAME = 2;
 const RENDER_FRAMES_PER_SECOND = 60;
 const FRAME_DURATION = 1000 / RENDER_FRAMES_PER_SECOND;
 const TRANSITION_TICKS = 24;
@@ -306,10 +307,12 @@ async function startPixelBackground() {
     previousTime = currentTime;
     accumulator += frameDuration;
     frameAccumulator += frameDuration;
+    let processedTicks = 0;
 
-    while (accumulator >= TICK_DURATION) {
+    while (accumulator >= TICK_DURATION && processedTicks < MAX_TICKS_PER_FRAME) {
       accumulator -= TICK_DURATION;
       simulationTick += 1;
+      processedTicks += 1;
 
       finishCompletedCohorts(simulationTick);
 
@@ -327,6 +330,13 @@ async function startPixelBackground() {
         selectNextCohort(simulationTick);
       }
 
+    }
+
+    if (accumulator >= TICK_DURATION) {
+      accumulator %= TICK_DURATION;
+    }
+
+    if (processedTicks > 0) {
       uploadPixelState();
       canvas.dataset.simulationTick = String(simulationTick);
     }

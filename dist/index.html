@@ -77,13 +77,8 @@
       right: 0;
       left: 0;
       height: 24%;
-      backface-visibility: hidden;
-      background: rgba(255, 255, 255, .001);
-      contain: strict;
-      backdrop-filter: blur(clamp(8px, 1.25vh, 16px)) brightness(3.2) contrast(1.12);
-      -webkit-backdrop-filter: blur(clamp(8px, 1.25vh, 16px)) brightness(3.2) contrast(1.12);
+      overflow: hidden;
       transform: translateZ(0);
-      will-change: backdrop-filter;
     }
     .edge-light__band--top {
       top: 0;
@@ -95,6 +90,19 @@
       mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
       -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
     }
+    .edge-light__filter {
+      position: absolute;
+      right: -16px;
+      left: -16px;
+      backface-visibility: hidden;
+      background: rgba(255, 255, 255, .001);
+      backdrop-filter: brightness(3.2) contrast(1.12);
+      -webkit-backdrop-filter: brightness(3.2) contrast(1.12);
+      transform: translateZ(0);
+      will-change: backdrop-filter;
+    }
+    .edge-light__band--top .edge-light__filter { top: 0; bottom: -16px; }
+    .edge-light__band--bottom .edge-light__filter { top: -16px; bottom: 0; }
     .background-veil {
       position: absolute;
       z-index: 1;
@@ -552,8 +560,8 @@
   <a class="skip-link" href="#main">Skip to content</a>
   <canvas id="pixel-background" width="128" height="1072" aria-hidden="true"></canvas>
   <div id="edge-light" aria-hidden="true">
-    <div class="edge-light__band edge-light__band--top"></div>
-    <div class="edge-light__band edge-light__band--bottom"></div>
+    <div class="edge-light__band edge-light__band--top"><div class="edge-light__filter"></div></div>
+    <div class="edge-light__band edge-light__band--bottom"><div class="edge-light__filter"></div></div>
   </div>
   <div class="background-veil" aria-hidden="true"></div>
 

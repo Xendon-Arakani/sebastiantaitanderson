@@ -11,6 +11,7 @@ let pointerX = -1;
 let pointerY = -1;
 let pointerIsPresent = false;
 let hoveredElement = null;
+let pendingSampleFrame = 0;
 
 function setHoveredElement(nextElement) {
   if (nextElement === hoveredElement) return;
@@ -30,12 +31,21 @@ function samplePointerTarget() {
   setHoveredElement(elementAtPointer?.closest(HOVER_TARGET_SELECTOR) ?? null);
 }
 
+function schedulePointerSample() {
+  if (pendingSampleFrame) return;
+
+  pendingSampleFrame = requestAnimationFrame(() => {
+    pendingSampleFrame = 0;
+    samplePointerTarget();
+  });
+}
+
 document.addEventListener("pointermove", (event) => {
   if (event.pointerType !== "mouse") return;
   pointerX = event.clientX;
   pointerY = event.clientY;
   pointerIsPresent = true;
-  samplePointerTarget();
+  schedulePointerSample();
 }, { passive: true });
 
 document.addEventListener("pointerout", (event) => {
@@ -50,4 +60,4 @@ window.addEventListener("blur", () => {
   setHoveredElement(null);
 });
 
-window.addEventListener("scroll", samplePointerTarget, { passive: true });
+window.addEventListener("scroll", schedulePointerSample, { passive: true });
