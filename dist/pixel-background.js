@@ -121,9 +121,6 @@ async function startPixelBackground() {
     uniform sampler2D u_image_2;
     uniform sampler2D u_state;
     uniform float u_tick_mod;
-    uniform float u_edge_top;
-    uniform float u_edge_bottom;
-    uniform float u_edge_reach;
 
     vec4 image_pixel(int image_index, vec2 uv) {
       if (image_index == 1) {
@@ -135,8 +132,8 @@ async function startPixelBackground() {
       return texture(u_image_0, uv);
     }
 
-    vec4 animated_pixel(vec2 uv) {
-      vec4 state = texture(u_state, uv);
+    void main() {
+      vec4 state = texture(u_state, v_uv);
       int source_index = int(floor(state.r * 255.0 + 0.5));
       int target_index = int(floor(state.g * 255.0 + 0.5));
       float start_tick = floor(state.b * 255.0 + 0.5);
@@ -144,26 +141,9 @@ async function startPixelBackground() {
       float elapsed_ticks = mod(u_tick_mod - start_tick + 256.0, 256.0);
       float interpolation = is_active * clamp(elapsed_ticks / ${TRANSITION_TICKS.toFixed(1)}, 0.0, 1.0);
 
-      vec4 source_color = image_pixel(source_index, uv);
-      vec4 target_color = image_pixel(target_index, uv);
-      return mix(source_color, target_color, interpolation);
-    }
-
-    void main() {
-      vec4 base_color = animated_pixel(v_uv);
-      float document_y = 1.0 - v_uv.y;
-      float top_falloff = clamp(1.0 - (document_y - u_edge_top) / u_edge_reach, 0.0, 1.0);
-      float bottom_falloff = clamp(1.0 - (u_edge_bottom - document_y) / u_edge_reach, 0.0, 1.0);
-      top_falloff *= top_falloff * step(u_edge_top, document_y) * step(document_y, u_edge_top + u_edge_reach);
-      bottom_falloff *= bottom_falloff * step(u_edge_bottom - u_edge_reach, document_y) * step(document_y, u_edge_bottom);
-
-      bool use_top = top_falloff >= bottom_falloff;
-      float edge_falloff = max(top_falloff, bottom_falloff);
-      float edge_document_y = use_top ? u_edge_top : u_edge_bottom;
-      vec3 edge_color = animated_pixel(vec2(v_uv.x, 1.0 - edge_document_y)).rgb;
-      vec3 emission = clamp(edge_color * edge_falloff * 3.6, 0.0, 1.0);
-      vec3 lit_color = 1.0 - (1.0 - base_color.rgb) * (1.0 - emission);
-      out_color = vec4(lit_color, base_color.a);
+      vec4 source_color = image_pixel(source_index, v_uv);
+      vec4 target_color = image_pixel(target_index, v_uv);
+      out_color = mix(source_color, target_color, interpolation);
     }
   `;
 
@@ -223,29 +203,6 @@ async function startPixelBackground() {
   gl.uniform1i(gl.getUniformLocation(program, "u_state"), 3);
 
   const tickLocation = gl.getUniformLocation(program, "u_tick_mod");
-  const edgeTopLocation = gl.getUniformLocation(program, "u_edge_top");
-  const edgeBottomLocation = gl.getUniformLocation(program, "u_edge_bottom");
-  const edgeReachLocation = gl.getUniformLocation(program, "u_edge_reach");
-  let edgeTop = 0;
-  let edgeBottom = 1;
-  let edgeReach = 0;
-
-  function syncEdgeGeometry() {
-    const documentHeight = Math.max(
-      document.documentElement.scrollHeight,
-      document.body.scrollHeight,
-      window.innerHeight,
-    );
-    const mastheadBottom = document.querySelector(".masthead").getBoundingClientRect().bottom;
-    edgeTop = Math.max(0, Math.min(1, (window.scrollY + mastheadBottom) / documentHeight));
-    edgeBottom = Math.max(0, Math.min(1, (window.scrollY + window.innerHeight) / documentHeight));
-    edgeReach = Math.max(1 / documentHeight, ((window.innerHeight - mastheadBottom) * 0.24) / documentHeight);
-  }
-
-  window.addEventListener("scroll", syncEdgeGeometry, { passive: true });
-  window.addEventListener("resize", syncEdgeGeometry, { passive: true });
-  window.visualViewport?.addEventListener("resize", syncEdgeGeometry, { passive: true });
-  syncEdgeGeometry();
 
   function writePixelState(pixel) {
     const offset = pixel * 4;
@@ -375,9 +332,6 @@ async function startPixelBackground() {
     const tickModulo = (simulationTick + fractionalTick) % 256;
     gl.viewport(0, 0, WIDTH, HEIGHT);
     gl.uniform1f(tickLocation, tickModulo);
-    gl.uniform1f(edgeTopLocation, edgeTop);
-    gl.uniform1f(edgeBottomLocation, edgeBottom);
-    gl.uniform1f(edgeReachLocation, edgeReach);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     if (settledAtTick !== null) {
@@ -393,14 +347,11 @@ async function startPixelBackground() {
   });
 
   canvas.dataset.renderer = "webgl2";
-  canvas.dataset.edgeShader = "boundary-emission";
-  document.documentElement.dataset.edgeBackgroundRenderer = "webgl2";
   canvas.dataset.initialImage = String(initialImage + 1);
   requestAnimationFrame(render);
 }
 
 startPixelBackground().catch((error) => {
   canvas.dataset.renderer = "static-fallback";
-  document.documentElement.dataset.edgeBackgroundRenderer = "static";
   console.error(error);
 });

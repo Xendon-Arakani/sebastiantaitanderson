@@ -30,11 +30,6 @@
       --reading: 52rem;
       --masthead-height: 4.75rem;
       --edge-aperture-top: var(--masthead-height);
-      --edge-sample-height: 1px;
-      --edge-sample-scale: 1;
-      --edge-scroll-y: 0px;
-      --edge-document-height: 100vh;
-      --edge-viewport-height: 100vh;
       --ease: cubic-bezier(.2, .75, .25, 1);
     }
 
@@ -83,8 +78,13 @@
       right: 0;
       left: 0;
       height: 24%;
-      overflow: hidden;
-      isolation: isolate;
+      backface-visibility: hidden;
+      background: rgba(255, 255, 255, .001);
+      contain: strict;
+      backdrop-filter: blur(clamp(8px, 1.25vh, 16px)) brightness(3.2) contrast(1.12);
+      -webkit-backdrop-filter: blur(clamp(8px, 1.25vh, 16px)) brightness(3.2) contrast(1.12);
+      transform: translateZ(0);
+      will-change: backdrop-filter;
     }
     .edge-light__band--top {
       top: 0;
@@ -95,71 +95,6 @@
       bottom: 0;
       mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
       -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
-    }
-    .edge-light__blur {
-      position: absolute;
-      z-index: 0;
-      right: -16px;
-      left: -16px;
-      backface-visibility: hidden;
-      background: rgba(255, 255, 255, .001);
-      backdrop-filter: blur(clamp(8px, 1.25vh, 16px)) brightness(3.2) contrast(1.12);
-      -webkit-backdrop-filter: blur(clamp(8px, 1.25vh, 16px)) brightness(3.2) contrast(1.12);
-      transform: translateZ(0);
-    }
-    .edge-light__band--top .edge-light__blur { top: 0; bottom: -16px; }
-    .edge-light__band--bottom .edge-light__blur { top: -16px; bottom: 0; }
-    .edge-light__slice {
-      position: absolute;
-      z-index: 1;
-      right: 0;
-      left: 0;
-      height: var(--edge-sample-height);
-      overflow: hidden;
-      filter: brightness(4) contrast(1.08);
-      mix-blend-mode: screen;
-      transform: translateZ(0) scaleY(var(--edge-sample-scale));
-      will-change: transform;
-    }
-    .edge-light__band--top .edge-light__slice { top: 0; transform-origin: 50% 0; }
-    .edge-light__band--bottom .edge-light__slice { bottom: 0; transform-origin: 50% 100%; }
-    .edge-light__page-copy {
-      position: absolute;
-      left: 0;
-      width: 100vw;
-      min-height: var(--edge-document-height);
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 1rem;
-      line-height: 1.65;
-      transform: translateY(calc(-1 * var(--edge-scroll-y)));
-    }
-    .edge-light__page-copy--top { top: calc(-1 * var(--edge-aperture-top)); }
-    .edge-light__page-copy--bottom { top: calc(-1 * (var(--edge-viewport-height) - var(--edge-sample-height))); }
-    .edge-light__static-background {
-      position: absolute;
-      z-index: 0;
-      inset: 0;
-      background:
-        linear-gradient(rgba(5, 8, 7, .46), rgba(5, 8, 7, .46)),
-        var(--night) url("assets/alien-jungle-1.png") center top / 100% 100% no-repeat;
-      image-rendering: pixelated;
-    }
-    html[data-edge-background-renderer="webgl2"] .edge-light__static-background { display: none; }
-    .edge-light__page-copy .hero__meta,
-    .edge-light__page-copy h1,
-    .edge-light__page-copy .hero__intro,
-    .edge-light__page-copy .reveal { animation: none !important; opacity: 1; transform: none; }
-
-    @supports (animation-timeline: scroll()) {
-      .edge-light__page-copy {
-        animation: edge-scroll-sync 1ms linear both;
-        animation-timeline: scroll(root block);
-      }
-      @keyframes edge-scroll-sync {
-        from { transform: translateY(0); }
-        to { transform: translateY(calc(-1 * (var(--edge-document-height) - var(--edge-viewport-height)))); }
-      }
     }
     .background-veil {
       position: absolute;
@@ -618,8 +553,8 @@
   <a class="skip-link" href="#main">Skip to content</a>
   <canvas id="pixel-background" width="128" height="1072" aria-hidden="true"></canvas>
   <div id="edge-light" aria-hidden="true">
-    <div class="edge-light__band edge-light__band--top"><div class="edge-light__blur"></div><div class="edge-light__slice"><div class="edge-light__page-copy edge-light__page-copy--top"></div></div></div>
-    <div class="edge-light__band edge-light__band--bottom"><div class="edge-light__blur"></div><div class="edge-light__slice"><div class="edge-light__page-copy edge-light__page-copy--bottom"></div></div></div>
+    <div class="edge-light__band edge-light__band--top"></div>
+    <div class="edge-light__band edge-light__band--bottom"></div>
   </div>
   <div class="background-veil" aria-hidden="true"></div>
 
@@ -775,7 +710,7 @@
     </div>
   </footer>
   <script src="pointer-state.js"></script>
-  <script src="edge-light.js?v=2"></script>
-  <script type="module" src="pixel-background.js?v=2"></script>
+  <script src="edge-light.js?v=3"></script>
+  <script type="module" src="pixel-background.js?v=3"></script>
 </body>
 </html>
