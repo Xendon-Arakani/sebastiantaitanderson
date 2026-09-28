@@ -7,6 +7,8 @@ const RENDER_FRAMES_PER_SECOND = 60;
 const FRAME_DURATION = 1000 / RENDER_FRAMES_PER_SECOND;
 const TRANSITION_TICKS = 24;
 const SELECTION_COUNT = Math.round(PIXEL_COUNT * 0.01);
+const FULL_TRANSFER_TICKS = Math.ceil(PIXEL_COUNT / SELECTION_COUNT) + TRANSITION_TICKS;
+const FULL_IMAGE_HOLD_TICKS = FULL_TRANSFER_TICKS;
 
 const canvas = document.querySelector("#pixel-background");
 const imageUrls = [
@@ -20,6 +22,7 @@ canvas.height = HEIGHT;
 canvas.dataset.selectionSize = String(SELECTION_COUNT);
 canvas.dataset.tickRate = String(TICKS_PER_SECOND);
 canvas.dataset.frameRate = String(RENDER_FRAMES_PER_SECOND);
+canvas.dataset.fullImageHoldTicks = String(FULL_IMAGE_HOLD_TICKS);
 
 function loadImage(url) {
   return new Promise((resolve, reject) => {
@@ -178,6 +181,8 @@ async function startPixelBackground() {
   let currentTargetImage = (initialImage + 1 + Math.floor(Math.random() * 2)) % images.length;
   let settledToTarget = 0;
   let targetPhase = 1;
+  let settledAtTick = null;
+  let settledFrameShown = false;
 
   sourceIndices.fill(initialImage);
   targetIndices.fill(initialImage);
@@ -227,6 +232,8 @@ async function startPixelBackground() {
   function chooseNextTarget() {
     currentTargetImage = (currentTargetImage + 1 + Math.floor(Math.random() * 2)) % images.length;
     targetPhase += 1;
+    settledAtTick = null;
+    settledFrameShown = false;
     rebuildEligiblePixels();
   }
 
@@ -306,11 +313,20 @@ async function startPixelBackground() {
 
       finishCompletedCohorts(simulationTick);
 
-      if (settledToTarget === PIXEL_COUNT && activePixelCount === 0) {
+      if (settledToTarget === PIXEL_COUNT && activePixelCount === 0 && settledAtTick === null) {
+        settledAtTick = simulationTick;
+      }
+
+      const completedHoldTicks = settledAtTick === null ? 0 : simulationTick - settledAtTick;
+
+      if (settledFrameShown && completedHoldTicks >= FULL_IMAGE_HOLD_TICKS) {
         chooseNextTarget();
       }
 
-      selectNextCohort(simulationTick);
+      if (settledAtTick === null) {
+        selectNextCohort(simulationTick);
+      }
+
       uploadPixelState();
       canvas.dataset.simulationTick = String(simulationTick);
     }
@@ -322,6 +338,10 @@ async function startPixelBackground() {
       gl.viewport(0, 0, WIDTH, HEIGHT);
       gl.uniform1f(tickLocation, tickModulo);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+      if (settledAtTick !== null) {
+        settledFrameShown = true;
+      }
     }
 
     requestAnimationFrame(render);
