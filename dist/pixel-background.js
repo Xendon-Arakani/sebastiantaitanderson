@@ -9,6 +9,7 @@ const FULL_TRANSFER_TICKS = Math.ceil(PIXEL_COUNT / SELECTION_COUNT) + TRANSITIO
 const FULL_IMAGE_HOLD_TICKS = FULL_TRANSFER_TICKS;
 
 const canvas = document.querySelector("#pixel-background");
+const edgeCanvas = document.querySelector("#edge-background");
 const imageUrls = [
   "assets/alien-jungle-1.png",
   "assets/alien-jungle-2.png",
@@ -78,6 +79,203 @@ function createImageTexture(gl, image, unit) {
   return texture;
 }
 
+function createEdgeRenderer(images, initialState) {
+  const edgeLight = document.querySelector("#edge-light");
+  const masthead = document.querySelector(".masthead");
+  const gl = edgeCanvas.getContext("webgl2", {
+    alpha: true,
+    antialias: false,
+    depth: false,
+    powerPreference: "low-power",
+    premultipliedAlpha: false,
+    preserveDrawingBuffer: false,
+    stencil: false,
+  });
+
+  if (!gl) return null;
+
+  const vertexSource = `#version 300 es
+    in vec2 a_position;
+    out vec2 v_uv;
+
+    void main() {
+      v_uv = (a_position + 1.0) * 0.5;
+      gl_Position = vec4(a_position, 0.0, 1.0);
+    }
+  `;
+
+  const fragmentSource = `#version 300 es
+    precision highp float;
+
+    in vec2 v_uv;
+    out vec4 out_color;
+
+    uniform sampler2D u_image_0;
+    uniform sampler2D u_image_1;
+    uniform sampler2D u_image_2;
+    uniform sampler2D u_state;
+    uniform float u_tick_mod;
+    uniform float u_document_top;
+    uniform float u_document_height;
+    uniform float u_aperture_height;
+    uniform float u_viewport_width;
+    uniform float u_blur_radius;
+
+    vec4 image_pixel(int image_index, vec2 uv) {
+      if (image_index == 1) return texture(u_image_1, uv);
+      if (image_index == 2) return texture(u_image_2, uv);
+      return texture(u_image_0, uv);
+    }
+
+    vec4 animated_pixel(vec2 uv) {
+      vec4 state = texture(u_state, uv);
+      int source_index = int(floor(state.r * 255.0 + 0.5));
+      int target_index = int(floor(state.g * 255.0 + 0.5));
+      float start_tick = floor(state.b * 255.0 + 0.5);
+      float is_active = step(0.5, state.a);
+      float elapsed_ticks = mod(u_tick_mod - start_tick + 256.0, 256.0);
+      float interpolation = is_active * clamp(elapsed_ticks / ${TRANSITION_TICKS.toFixed(1)}, 0.0, 1.0);
+      return mix(image_pixel(source_index, uv), image_pixel(target_index, uv), interpolation);
+    }
+
+    vec4 composited_pixel(vec2 uv) {
+      vec4 art = animated_pixel(clamp(uv, 0.0, 1.0));
+      return vec4(mix(art.rgb, vec3(5.0, 8.0, 7.0) / 255.0, 0.46), 1.0);
+    }
+
+    void main() {
+      float screen_down = 1.0 - v_uv.y;
+      float document_y = u_document_top + screen_down * u_aperture_height;
+      vec2 document_uv = vec2(v_uv.x, 1.0 - document_y / u_document_height);
+      vec2 blur_uv = vec2(u_blur_radius / u_viewport_width, u_blur_radius / u_document_height);
+
+      vec4 blurred = composited_pixel(document_uv) * 0.227027;
+      blurred += composited_pixel(document_uv + vec2( blur_uv.x, 0.0)) * 0.121622;
+      blurred += composited_pixel(document_uv + vec2(-blur_uv.x, 0.0)) * 0.121622;
+      blurred += composited_pixel(document_uv + vec2(0.0,  blur_uv.y)) * 0.121622;
+      blurred += composited_pixel(document_uv + vec2(0.0, -blur_uv.y)) * 0.121622;
+      blurred += composited_pixel(document_uv + vec2( blur_uv.x,  blur_uv.y)) * 0.071621;
+      blurred += composited_pixel(document_uv + vec2(-blur_uv.x,  blur_uv.y)) * 0.071621;
+      blurred += composited_pixel(document_uv + vec2( blur_uv.x, -blur_uv.y)) * 0.071621;
+      blurred += composited_pixel(document_uv + vec2(-blur_uv.x, -blur_uv.y)) * 0.071621;
+
+      float top_falloff = pow(max(0.0, 1.0 - screen_down / 0.24), 2.0);
+      float bottom_falloff = pow(max(0.0, 1.0 - v_uv.y / 0.24), 2.0);
+      float falloff = max(top_falloff, bottom_falloff);
+      vec3 filtered = clamp((blurred.rgb * 3.2 - 0.5) * 1.12 + 0.5, 0.0, 1.0);
+      out_color = vec4(filtered, falloff);
+    }
+  `;
+
+  const program = createProgram(gl, vertexSource, fragmentSource);
+  gl.useProgram(program);
+
+  const positionBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+
+  const positionLocation = gl.getAttribLocation(program, "a_position");
+  gl.enableVertexAttribArray(positionLocation);
+  gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+  images.forEach((image, index) => createImageTexture(gl, image, index));
+  gl.uniform1i(gl.getUniformLocation(program, "u_image_0"), 0);
+  gl.uniform1i(gl.getUniformLocation(program, "u_image_1"), 1);
+  gl.uniform1i(gl.getUniformLocation(program, "u_image_2"), 2);
+
+  const stateTexture = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE3);
+  gl.bindTexture(gl.TEXTURE_2D, stateTexture);
+  configureTexture(gl);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, WIDTH, HEIGHT, 0, gl.RGBA, gl.UNSIGNED_BYTE, initialState);
+  gl.uniform1i(gl.getUniformLocation(program, "u_state"), 3);
+
+  const uniforms = {
+    tick: gl.getUniformLocation(program, "u_tick_mod"),
+    documentTop: gl.getUniformLocation(program, "u_document_top"),
+    documentHeight: gl.getUniformLocation(program, "u_document_height"),
+    apertureHeight: gl.getUniformLocation(program, "u_aperture_height"),
+    viewportWidth: gl.getUniformLocation(program, "u_viewport_width"),
+    blurRadius: gl.getUniformLocation(program, "u_blur_radius"),
+  };
+  const geometry = {
+    apertureHeight: 1,
+    blurRadius: 8,
+    documentHeight: 1,
+    mastheadBottom: 0,
+    viewportWidth: 1,
+    bandPixels: 1,
+  };
+
+  function syncGeometry() {
+    const pixelRatio = Math.max(1, window.devicePixelRatio || 1);
+    const viewportWidth = Math.max(1, document.documentElement.clientWidth);
+    const viewportHeight = Math.max(1, window.innerHeight);
+    const mastheadBottom = Math.max(0, masthead.getBoundingClientRect().bottom);
+    const apertureHeight = Math.max(1 / pixelRatio, viewportHeight - mastheadBottom);
+    const layoutHeight = Math.max(
+      document.documentElement.getBoundingClientRect().height,
+      document.body.getBoundingClientRect().height,
+      viewportHeight,
+    );
+    const physicalWidth = Math.max(1, Math.round(viewportWidth * pixelRatio));
+    const physicalHeight = Math.max(1, Math.round(apertureHeight * pixelRatio));
+
+    if (edgeCanvas.width !== physicalWidth || edgeCanvas.height !== physicalHeight) {
+      edgeCanvas.width = physicalWidth;
+      edgeCanvas.height = physicalHeight;
+      gl.viewport(0, 0, physicalWidth, physicalHeight);
+    }
+
+    geometry.viewportWidth = viewportWidth;
+    geometry.apertureHeight = apertureHeight;
+    geometry.mastheadBottom = mastheadBottom;
+    geometry.documentHeight = Math.ceil(layoutHeight * pixelRatio) / pixelRatio;
+    geometry.blurRadius = Math.min(16, Math.max(8, viewportHeight * 0.0125));
+    geometry.bandPixels = Math.max(1, Math.ceil(physicalHeight * 0.24));
+
+    edgeCanvas.dataset.physicalWidth = String(physicalWidth);
+    edgeCanvas.dataset.physicalHeight = String(physicalHeight);
+    edgeCanvas.dataset.presentation = "native-frame";
+    edgeCanvas.dataset.scrollSource = "window-scroll-y";
+  }
+
+  function uploadState(state) {
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, stateTexture);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, WIDTH, HEIGHT, gl.RGBA, gl.UNSIGNED_BYTE, state);
+  }
+
+  function render(tickModulo) {
+    gl.useProgram(program);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(uniforms.tick, tickModulo);
+    gl.uniform1f(uniforms.documentTop, window.scrollY + geometry.mastheadBottom);
+    gl.uniform1f(uniforms.documentHeight, geometry.documentHeight);
+    gl.uniform1f(uniforms.apertureHeight, geometry.apertureHeight);
+    gl.uniform1f(uniforms.viewportWidth, geometry.viewportWidth);
+    gl.uniform1f(uniforms.blurRadius, geometry.blurRadius);
+
+    gl.enable(gl.SCISSOR_TEST);
+    gl.scissor(0, 0, edgeCanvas.width, geometry.bandPixels);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.scissor(0, edgeCanvas.height - geometry.bandPixels, edgeCanvas.width, geometry.bandPixels);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.disable(gl.SCISSOR_TEST);
+  }
+
+  const resizeObserver = new ResizeObserver(syncGeometry);
+  resizeObserver.observe(edgeLight);
+  resizeObserver.observe(masthead);
+  window.addEventListener("resize", syncGeometry, { passive: true });
+  window.visualViewport?.addEventListener("resize", syncGeometry, { passive: true });
+  syncGeometry();
+
+  return { render, uploadState };
+}
+
 async function startPixelBackground() {
   const images = await Promise.all(imageUrls.map(loadImage));
 
@@ -132,8 +330,8 @@ async function startPixelBackground() {
       return texture(u_image_0, uv);
     }
 
-    void main() {
-      vec4 state = texture(u_state, v_uv);
+    vec4 animated_pixel(vec2 uv) {
+      vec4 state = texture(u_state, uv);
       int source_index = int(floor(state.r * 255.0 + 0.5));
       int target_index = int(floor(state.g * 255.0 + 0.5));
       float start_tick = floor(state.b * 255.0 + 0.5);
@@ -141,9 +339,13 @@ async function startPixelBackground() {
       float elapsed_ticks = mod(u_tick_mod - start_tick + 256.0, 256.0);
       float interpolation = is_active * clamp(elapsed_ticks / ${TRANSITION_TICKS.toFixed(1)}, 0.0, 1.0);
 
-      vec4 source_color = image_pixel(source_index, v_uv);
-      vec4 target_color = image_pixel(target_index, v_uv);
-      out_color = mix(source_color, target_color, interpolation);
+      vec4 source_color = image_pixel(source_index, uv);
+      vec4 target_color = image_pixel(target_index, uv);
+      return mix(source_color, target_color, interpolation);
+    }
+
+    void main() {
+      out_color = animated_pixel(v_uv);
     }
   `;
 
@@ -203,6 +405,7 @@ async function startPixelBackground() {
   gl.uniform1i(gl.getUniformLocation(program, "u_state"), 3);
 
   const tickLocation = gl.getUniformLocation(program, "u_tick_mod");
+  const edgeRenderer = createEdgeRenderer(images, stateData);
 
   function writePixelState(pixel) {
     const offset = pixel * 4;
@@ -286,6 +489,7 @@ async function startPixelBackground() {
     gl.activeTexture(gl.TEXTURE3);
     gl.bindTexture(gl.TEXTURE_2D, stateTexture);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, WIDTH, HEIGHT, gl.RGBA, gl.UNSIGNED_BYTE, stateData);
+    edgeRenderer?.uploadState(stateData);
     canvas.dataset.activePixels = String(activePixelCount);
     canvas.dataset.targetImage = String(currentTargetImage + 1);
     canvas.dataset.targetPhase = String(targetPhase);
@@ -333,6 +537,7 @@ async function startPixelBackground() {
     gl.viewport(0, 0, WIDTH, HEIGHT);
     gl.uniform1f(tickLocation, tickModulo);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    edgeRenderer?.render(tickModulo);
 
     if (settledAtTick !== null) {
       settledFrameShown = true;
@@ -348,10 +553,14 @@ async function startPixelBackground() {
 
   canvas.dataset.renderer = "webgl2";
   canvas.dataset.initialImage = String(initialImage + 1);
+  edgeCanvas.dataset.renderer = edgeRenderer ? "webgl2" : "static-fallback";
+  edgeCanvas.dataset.edgeShader = edgeRenderer ? "physical-pixel-bloom" : "none";
+  document.documentElement.dataset.edgeBackgroundRenderer = edgeRenderer ? "webgl2" : "static";
   requestAnimationFrame(render);
 }
 
 startPixelBackground().catch((error) => {
   canvas.dataset.renderer = "static-fallback";
+  document.documentElement.dataset.edgeBackgroundRenderer = "static";
   console.error(error);
 });
