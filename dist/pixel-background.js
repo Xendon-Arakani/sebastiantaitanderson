@@ -87,7 +87,7 @@ function createEdgeRenderer(images, initialState) {
     antialias: false,
     depth: false,
     powerPreference: "low-power",
-    premultipliedAlpha: false,
+    premultipliedAlpha: true,
     preserveDrawingBuffer: false,
     stencil: false,
   });
@@ -149,21 +149,30 @@ function createEdgeRenderer(images, initialState) {
       vec2 document_uv = vec2(v_uv.x, 1.0 - document_y / u_document_height);
       vec2 blur_uv = vec2(u_blur_radius / u_viewport_width, u_blur_radius / u_document_height);
 
-      vec4 blurred = composited_pixel(document_uv) * 0.227027;
-      blurred += composited_pixel(document_uv + vec2( blur_uv.x, 0.0)) * 0.121622;
-      blurred += composited_pixel(document_uv + vec2(-blur_uv.x, 0.0)) * 0.121622;
-      blurred += composited_pixel(document_uv + vec2(0.0,  blur_uv.y)) * 0.121622;
-      blurred += composited_pixel(document_uv + vec2(0.0, -blur_uv.y)) * 0.121622;
-      blurred += composited_pixel(document_uv + vec2( blur_uv.x,  blur_uv.y)) * 0.071621;
-      blurred += composited_pixel(document_uv + vec2(-blur_uv.x,  blur_uv.y)) * 0.071621;
-      blurred += composited_pixel(document_uv + vec2( blur_uv.x, -blur_uv.y)) * 0.071621;
-      blurred += composited_pixel(document_uv + vec2(-blur_uv.x, -blur_uv.y)) * 0.071621;
+      float edge_distance = min(screen_down, v_uv.y);
+      vec4 base_sample = composited_pixel(document_uv);
+      vec4 light_sample = base_sample;
 
-      float top_falloff = pow(max(0.0, 1.0 - screen_down / 0.24), 2.0);
-      float bottom_falloff = pow(max(0.0, 1.0 - v_uv.y / 0.24), 2.0);
-      float falloff = max(top_falloff, bottom_falloff);
-      vec3 filtered = clamp((blurred.rgb * 3.2 - 0.5) * 1.12 + 0.5, 0.0, 1.0);
-      out_color = vec4(filtered, falloff);
+      if (edge_distance < 0.28) {
+        vec4 blurred = base_sample * 0.227027;
+        blurred += composited_pixel(document_uv + vec2( blur_uv.x, 0.0)) * 0.121622;
+        blurred += composited_pixel(document_uv + vec2(-blur_uv.x, 0.0)) * 0.121622;
+        blurred += composited_pixel(document_uv + vec2(0.0,  blur_uv.y)) * 0.121622;
+        blurred += composited_pixel(document_uv + vec2(0.0, -blur_uv.y)) * 0.121622;
+        blurred += composited_pixel(document_uv + vec2( blur_uv.x,  blur_uv.y)) * 0.071621;
+        blurred += composited_pixel(document_uv + vec2(-blur_uv.x,  blur_uv.y)) * 0.071621;
+        blurred += composited_pixel(document_uv + vec2( blur_uv.x, -blur_uv.y)) * 0.071621;
+        blurred += composited_pixel(document_uv + vec2(-blur_uv.x, -blur_uv.y)) * 0.071621;
+        float blur_amount = 1.0 - smoothstep(0.20, 0.28, edge_distance);
+        light_sample = mix(base_sample, blurred, blur_amount);
+      }
+
+      float decay_scale = 0.12;
+      float top_light = 1.0 / (1.0 + pow(screen_down / decay_scale, 2.0));
+      float bottom_light = 1.0 / (1.0 + pow(v_uv.y / decay_scale, 2.0));
+      float falloff = 1.0 - (1.0 - top_light) * (1.0 - bottom_light);
+      vec3 filtered = clamp((light_sample.rgb * 3.2 - 0.5) * 1.12 + 0.5, 0.0, 1.0);
+      out_color = vec4(filtered * falloff, falloff);
     }
   `;
 
@@ -205,7 +214,6 @@ function createEdgeRenderer(images, initialState) {
     documentHeight: 1,
     mastheadBottom: 0,
     viewportWidth: 1,
-    bandPixels: 1,
   };
 
   function syncGeometry() {
@@ -233,12 +241,11 @@ function createEdgeRenderer(images, initialState) {
     geometry.mastheadBottom = mastheadBottom;
     geometry.documentHeight = Math.ceil(layoutHeight * pixelRatio) / pixelRatio;
     geometry.blurRadius = Math.min(16, Math.max(8, viewportHeight * 0.0125));
-    geometry.bandPixels = Math.max(1, Math.ceil(physicalHeight * 0.24));
-
     edgeCanvas.dataset.physicalWidth = String(physicalWidth);
     edgeCanvas.dataset.physicalHeight = String(physicalHeight);
     edgeCanvas.dataset.presentation = "native-frame";
     edgeCanvas.dataset.scrollSource = "window-scroll-y";
+    edgeCanvas.dataset.falloff = "continuous-inverse-square";
   }
 
   function uploadState(state) {
@@ -258,12 +265,7 @@ function createEdgeRenderer(images, initialState) {
     gl.uniform1f(uniforms.viewportWidth, geometry.viewportWidth);
     gl.uniform1f(uniforms.blurRadius, geometry.blurRadius);
 
-    gl.enable(gl.SCISSOR_TEST);
-    gl.scissor(0, 0, edgeCanvas.width, geometry.bandPixels);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.scissor(0, edgeCanvas.height - geometry.bandPixels, edgeCanvas.width, geometry.bandPixels);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.disable(gl.SCISSOR_TEST);
   }
 
   const resizeObserver = new ResizeObserver(syncGeometry);

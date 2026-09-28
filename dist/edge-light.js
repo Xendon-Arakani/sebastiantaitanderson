@@ -105,7 +105,8 @@ function syncEdgeLightGeometry() {
     ),
   );
   const physicalApertureHeight = physicalViewportHeight - physicalMastheadBottom;
-  const physicalBandHeight = Math.max(1, Math.round(physicalApertureHeight * EDGE_REACH));
+  const physicalTopBandHeight = Math.max(1, Math.floor(physicalApertureHeight / 2));
+  const physicalBottomBandHeight = Math.max(1, physicalApertureHeight - physicalTopBandHeight);
   const layoutHeight = Math.max(
     root.getBoundingClientRect().height,
     document.body.getBoundingClientRect().height,
@@ -113,16 +114,19 @@ function syncEdgeLightGeometry() {
   );
   const alignedDocumentHeight = Math.ceil(layoutHeight * pixelRatio) / pixelRatio;
   const alignedViewportHeight = physicalViewportHeight / pixelRatio;
-  const alignedBandHeight = physicalBandHeight / pixelRatio;
+  const alignedTopBandHeight = physicalTopBandHeight / pixelRatio;
+  const alignedBottomBandHeight = physicalBottomBandHeight / pixelRatio;
 
   root.style.setProperty("--edge-aperture-top", `${physicalMastheadBottom / pixelRatio}px`);
   root.style.setProperty("--edge-document-height", `${alignedDocumentHeight}px`);
   root.style.setProperty("--edge-viewport-height", `${alignedViewportHeight}px`);
-  root.style.setProperty("--edge-band-height", `${alignedBandHeight}px`);
+  root.style.setProperty("--edge-top-band-height", `${alignedTopBandHeight}px`);
+  root.style.setProperty("--edge-bottom-band-height", `${alignedBottomBandHeight}px`);
 
   edgeLight.dataset.physicalWidth = String(Math.round(viewportWidth * pixelRatio));
   edgeLight.dataset.physicalHeight = String(physicalApertureHeight);
   edgeLight.dataset.edgeReach = String(EDGE_REACH);
+  edgeLight.dataset.falloff = "continuous-inverse-square";
   edgeLight.dataset.source = "self-contained-page-copy";
   edgeLight.dataset.effect = "original-masked-bloom";
   edgeLight.dataset.scrollSync = usesNativeScrollTimeline ? "scroll-timeline" : "native-scroll-event";

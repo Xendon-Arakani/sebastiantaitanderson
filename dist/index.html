@@ -33,7 +33,8 @@
       --edge-scroll-y: 0px;
       --edge-document-height: 100vh;
       --edge-viewport-height: 100vh;
-      --edge-band-height: 24vh;
+      --edge-top-band-height: 50vh;
+      --edge-bottom-band-height: 50vh;
       --ease: cubic-bezier(.2, .75, .25, 1);
     }
 
@@ -90,7 +91,6 @@
       z-index: 1;
       right: 0;
       left: 0;
-      height: var(--edge-band-height);
       backface-visibility: hidden;
       contain: strict;
       filter: blur(clamp(8px, 1.25vh, 16px)) brightness(3.2) contrast(1.12);
@@ -99,13 +99,15 @@
     }
     .edge-light__band--top {
       top: 0;
-      mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
+      height: var(--edge-top-band-height);
+      mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, rgba(0, 0, 0, .105) 100%);
+      -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, rgba(0, 0, 0, .105) 100%);
     }
     .edge-light__band--bottom {
       bottom: 0;
-      mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
+      height: var(--edge-bottom-band-height);
+      mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, rgba(0, 0, 0, .105) 100%);
+      -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, rgba(0, 0, 0, .105) 100%);
     }
     .edge-light__page-copy {
       position: absolute;
@@ -119,7 +121,7 @@
       transform: translateY(calc(-1 * var(--edge-scroll-y)));
     }
     .edge-light__band--top .edge-light__page-copy { top: calc(-1 * var(--edge-aperture-top)); }
-    .edge-light__band--bottom .edge-light__page-copy { top: calc(-1 * (var(--edge-viewport-height) - var(--edge-band-height))); }
+    .edge-light__band--bottom .edge-light__page-copy { top: calc(-1 * (var(--edge-viewport-height) - var(--edge-bottom-band-height))); }
     .edge-light__static-background {
       position: absolute;
       z-index: 0;
@@ -756,7 +758,7 @@
     </div>
   </footer>
   <script src="pointer-state.js"></script>
-  <script src="edge-light.js?v=7"></script>
-  <script type="module" src="pixel-background.js?v=7"></script>
+  <script src="edge-light.js?v=12"></script>
+  <script type="module" src="pixel-background.js?v=12"></script>
 </body>
 </html>
