@@ -7,7 +7,6 @@ const RENDER_FRAMES_PER_SECOND = 60;
 const FRAME_DURATION = 1000 / RENDER_FRAMES_PER_SECOND;
 const TRANSITION_TICKS = 24;
 const SELECTION_COUNT = Math.round(PIXEL_COUNT * 0.01);
-const TARGET_COMPLETION = 0.9;
 
 const canvas = document.querySelector("#pixel-background");
 const imageUrls = [
@@ -177,7 +176,7 @@ async function startPixelBackground() {
   let activePixelCount = 0;
   const cohorts = [];
   let currentTargetImage = (initialImage + 1 + Math.floor(Math.random() * 2)) % images.length;
-  let committedToTarget = 0;
+  let settledToTarget = 0;
   let targetPhase = 1;
 
   sourceIndices.fill(initialImage);
@@ -211,18 +210,13 @@ async function startPixelBackground() {
 
   function rebuildEligiblePixels() {
     eligibleCount = 0;
-    committedToTarget = 0;
+    settledToTarget = 0;
 
     for (let pixel = 0; pixel < PIXEL_COUNT; pixel += 1) {
-      if (activePixels[pixel]) {
-        if (targetIndices[pixel] === currentTargetImage) {
-          committedToTarget += 1;
-        }
-        continue;
-      }
+      if (activePixels[pixel]) continue;
 
       if (sourceIndices[pixel] === currentTargetImage) {
-        committedToTarget += 1;
+        settledToTarget += 1;
       } else {
         eligiblePixels[eligibleCount] = pixel;
         eligibleCount += 1;
@@ -246,7 +240,9 @@ async function startPixelBackground() {
         activePixelCount -= 1;
         writePixelState(pixel);
 
-        if (sourceIndices[pixel] !== currentTargetImage) {
+        if (sourceIndices[pixel] === currentTargetImage) {
+          settledToTarget += 1;
+        } else {
           eligiblePixels[eligibleCount] = pixel;
           eligibleCount += 1;
         }
@@ -268,7 +264,6 @@ async function startPixelBackground() {
       startTicks[pixel] = simulationTick % 256;
       activePixels[pixel] = 1;
       activePixelCount += 1;
-      committedToTarget += 1;
       pixels[index] = pixel;
       writePixelState(pixel);
     }
@@ -288,7 +283,7 @@ async function startPixelBackground() {
     canvas.dataset.activePixels = String(activePixelCount);
     canvas.dataset.targetImage = String(currentTargetImage + 1);
     canvas.dataset.targetPhase = String(targetPhase);
-    canvas.dataset.targetCompletion = (committedToTarget / PIXEL_COUNT).toFixed(4);
+    canvas.dataset.targetCompletion = (settledToTarget / PIXEL_COUNT).toFixed(4);
   }
 
   rebuildEligiblePixels();
@@ -311,7 +306,7 @@ async function startPixelBackground() {
 
       finishCompletedCohorts(simulationTick);
 
-      if (committedToTarget / PIXEL_COUNT >= TARGET_COMPLETION) {
+      if (settledToTarget === PIXEL_COUNT && activePixelCount === 0) {
         chooseNextTarget();
       }
 
