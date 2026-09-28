@@ -3,9 +3,6 @@ const HEIGHT = 1072;
 const PIXEL_COUNT = WIDTH * HEIGHT;
 const TICKS_PER_SECOND = 24;
 const TICK_DURATION = 1000 / TICKS_PER_SECOND;
-const MAX_TICKS_PER_FRAME = 2;
-const RENDER_FRAMES_PER_SECOND = 60;
-const FRAME_DURATION = 1000 / RENDER_FRAMES_PER_SECOND;
 const TRANSITION_TICKS = 24;
 const SELECTION_COUNT = Math.round(PIXEL_COUNT * 0.01);
 const FULL_TRANSFER_TICKS = Math.ceil(PIXEL_COUNT / SELECTION_COUNT) + TRANSITION_TICKS;
@@ -22,7 +19,7 @@ canvas.width = WIDTH;
 canvas.height = HEIGHT;
 canvas.dataset.selectionSize = String(SELECTION_COUNT);
 canvas.dataset.tickRate = String(TICKS_PER_SECOND);
-canvas.dataset.frameRate = String(RENDER_FRAMES_PER_SECOND);
+canvas.dataset.presentation = "requestAnimationFrame";
 canvas.dataset.fullImageHoldTicks = String(FULL_IMAGE_HOLD_TICKS);
 
 function loadImage(url) {
@@ -299,20 +296,16 @@ async function startPixelBackground() {
 
   let simulationTick = 0;
   let accumulator = 0;
-  let frameAccumulator = FRAME_DURATION;
   let previousTime = performance.now();
 
   function render(currentTime) {
-    const frameDuration = Math.min(currentTime - previousTime, 250);
+    const frameDuration = Math.min(currentTime - previousTime, TICK_DURATION);
     previousTime = currentTime;
     accumulator += frameDuration;
-    frameAccumulator += frameDuration;
-    let processedTicks = 0;
 
-    while (accumulator >= TICK_DURATION && processedTicks < MAX_TICKS_PER_FRAME) {
+    if (accumulator >= TICK_DURATION) {
       accumulator -= TICK_DURATION;
       simulationTick += 1;
-      processedTicks += 1;
 
       finishCompletedCohorts(simulationTick);
 
@@ -330,28 +323,18 @@ async function startPixelBackground() {
         selectNextCohort(simulationTick);
       }
 
-    }
-
-    if (accumulator >= TICK_DURATION) {
-      accumulator %= TICK_DURATION;
-    }
-
-    if (processedTicks > 0) {
       uploadPixelState();
       canvas.dataset.simulationTick = String(simulationTick);
     }
 
-    if (frameAccumulator >= FRAME_DURATION) {
-      frameAccumulator %= FRAME_DURATION;
-      const fractionalTick = accumulator / TICK_DURATION;
-      const tickModulo = (simulationTick + fractionalTick) % 256;
-      gl.viewport(0, 0, WIDTH, HEIGHT);
-      gl.uniform1f(tickLocation, tickModulo);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    const fractionalTick = accumulator / TICK_DURATION;
+    const tickModulo = (simulationTick + fractionalTick) % 256;
+    gl.viewport(0, 0, WIDTH, HEIGHT);
+    gl.uniform1f(tickLocation, tickModulo);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-      if (settledAtTick !== null) {
-        settledFrameShown = true;
-      }
+    if (settledAtTick !== null) {
+      settledFrameShown = true;
     }
 
     requestAnimationFrame(render);
@@ -360,7 +343,6 @@ async function startPixelBackground() {
   document.addEventListener("visibilitychange", () => {
     previousTime = performance.now();
     accumulator = 0;
-    frameAccumulator = FRAME_DURATION;
   });
 
   canvas.dataset.renderer = "webgl2";
