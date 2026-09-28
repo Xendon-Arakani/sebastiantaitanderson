@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sebastian Tait Anderson — developer, builder, and writer.">
+  <meta name="theme-color" content="#0d100f">
+  <title>Sebastian Tait Anderson — Developer</title>
+  <link rel="canonical" href="https://sebastiantaitanderson.com/">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%230d100f'/%3E%3Cpath d='M18 21h24M18 32h20M18 43h24' stroke='%23789187' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='44' cy='32' r='5' fill='%23ae7657'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: dark;
+      --night: #0d100f;
+      --night-soft: #111512;
+      --surface: #151a17;
+      --surface-raised: #1a201c;
+      --text: #d8d3c7;
+      --text-soft: #aaa79f;
+      --muted: #858d87;
+      --sage: #789187;
+      --sage-deep: #4f665e;
+      --copper: #ae7657;
+      --line: rgba(216, 211, 199, .11);
+      --line-strong: rgba(216, 211, 199, .2);
+      --display: Georgia, "Times New Roman", serif;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --max: 86rem;
+      --reading: 52rem;
+      --ease: cubic-bezier(.2, .75, .25, 1);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      position: relative;
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      background: var(--night);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 1rem;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      isolation: isolate;
+    }
+    a { color: inherit; }
+    a:focus-visible { outline: 2px solid var(--copper); outline-offset: 5px; }
+    ::selection { background: var(--sage); color: var(--night); }
+
+    #pixel-background {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--night) url("assets/alien-jungle-1.png") center top / 100% 100% no-repeat;
+      image-rendering: pixelated;
+      pointer-events: none;
+    }
+    .background-veil {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      background: rgba(5, 8, 7, .46);
+      pointer-events: none;
+    }
+    main,
+    .footer { position: relative; z-index: 2; }
+
+    .skip-link {
+      position: fixed;
+      z-index: 100;
+      top: 1rem;
+      left: 1rem;
+      padding: .75rem 1rem;
+      background: var(--copper);
+      color: var(--night);
+      transform: translateY(-200%);
+    }
+    .skip-link:focus { transform: none; }
+
+    .shell { width: min(calc(100% - 3rem), var(--max)); margin-inline: auto; }
+    .reading { width: min(100%, var(--reading)); margin-inline: auto; }
+
+    .masthead {
+      position: fixed;
+      z-index: 30;
+      inset: 0 0 auto;
+      border-bottom: 1px solid transparent;
+      background: rgba(13, 16, 15, .88);
+      backdrop-filter: blur(18px);
+    }
+    .masthead__inner {
+      display: flex;
+      min-height: 4.75rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: .75rem;
+      text-decoration: none;
+      font-size: .73rem;
+      font-weight: 650;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .brand__mark {
+      display: grid;
+      width: 2.15rem;
+      height: 2.15rem;
+      place-items: center;
+      border: 1px solid var(--sage);
+      border-radius: 50% 42% 50% 44%;
+      color: var(--sage);
+      font-family: var(--display);
+      font-size: .72rem;
+      font-style: italic;
+      letter-spacing: -.03em;
+      transition: border-color 260ms var(--ease), color 260ms var(--ease), transform 320ms var(--ease);
+    }
+    .brand:hover .brand__mark { border-color: var(--copper); color: var(--copper); transform: scale(1.08) rotate(-4deg); }
+    .nav { display: flex; align-items: center; gap: clamp(.9rem, 2.5vw, 2.25rem); }
+    .nav a {
+      position: relative;
+      padding-block: .6rem;
+      color: var(--text-soft);
+      text-decoration: none;
+      font-size: .71rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .nav a::after {
+      position: absolute;
+      right: 0;
+      bottom: .35rem;
+      left: 0;
+      height: 1px;
+      background: var(--copper);
+      content: "";
+      transform: scaleX(0);
+      transform-origin: center;
+      transition: transform 220ms var(--ease);
+    }
+    .nav a:hover { color: var(--text); }
+    .nav a:hover::after { transform: scaleX(1); }
+
+    .hero {
+      position: relative;
+      display: grid;
+      min-height: 100svh;
+      place-items: center;
+      overflow: hidden;
+      padding: 8.5rem 0 4rem;
+      text-align: center;
+    }
+    .hero::before,
+    .hero::after {
+      position: absolute;
+      z-index: -1;
+      border: 1px solid var(--line);
+      content: "";
+      pointer-events: none;
+    }
+    .hero::before {
+      width: min(68vw, 62rem);
+      aspect-ratio: 1.4;
+      border-color: rgba(120, 145, 135, .24);
+      border-radius: 50% 42% 48% 40%;
+      transform: rotate(-6deg);
+    }
+    .hero::after {
+      width: min(51vw, 47rem);
+      aspect-ratio: 1.15;
+      border-color: rgba(174, 118, 87, .2);
+      border-radius: 43% 52% 44% 50%;
+      transform: rotate(11deg);
+    }
+    .hero__content { position: relative; width: min(100%, 78rem); margin-inline: auto; }
+    .hero__meta,
+    .section-label,
+    .project__number,
+    .project__type,
+    .entry__kind,
+    .entry__state,
+    .record__year,
+    .availability {
+      font-family: var(--mono);
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .hero__meta {
+      display: inline-flex;
+      align-items: center;
+      gap: .8rem;
+      margin: 0 0 2.25rem;
+      color: var(--sage);
+      animation: rise .75s .05s var(--ease) both;
+    }
+    .hero__meta::before,
+    .hero__meta::after { width: 2.75rem; height: 1px; background: var(--sage-deep); content: ""; }
+    h1 {
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(4.1rem, 12.5vw, 11.5rem);
+      font-weight: 400;
+      letter-spacing: -.075em;
+      line-height: .78;
+      text-wrap: balance;
+      animation: rise .9s .12s var(--ease) both;
+    }
+    h1 span { display: block; }
+    h1 .name-middle { color: var(--copper); font-style: italic; }
+    .hero__intro {
+      max-width: 40rem;
+      margin: clamp(2.5rem, 5vw, 4.5rem) auto 0;
+      color: var(--text-soft);
+      font-size: clamp(1.03rem, 1.6vw, 1.22rem);
+      animation: rise .8s .22s var(--ease) both;
+    }
+    .hero__footer {
+      position: absolute;
+      right: 0;
+      bottom: -5.2rem;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border-top: 1px solid var(--line);
+      padding-top: 1rem;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .68rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .hero__footer a {
+      position: relative;
+      overflow: hidden;
+      padding: .55rem .85rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      color: var(--text-soft);
+      text-decoration: none;
+      transform: translateZ(0);
+      transition: border-color 240ms var(--ease), color 240ms var(--ease), transform 300ms var(--ease);
+    }
+    .hero__footer a::before {
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      border-radius: inherit;
+      background: var(--sage-deep);
+      content: "";
+      transform: scale(.78);
+      opacity: 0;
+      transition: opacity 240ms var(--ease), transform 300ms var(--ease);
+    }
+    .hero__footer a:hover { border-color: var(--sage); color: var(--text); transform: scale(1.035); }
+    .hero__footer a:hover::before { opacity: 1; transform: scale(1); }
+
+    .section { position: relative; padding: clamp(6rem, 11vw, 11rem) 0; border-top: 1px solid var(--line); }
+    .section-heading { margin-bottom: clamp(4rem, 7vw, 7rem); text-align: center; }
+    .section-label { display: block; margin-bottom: 1.2rem; color: var(--copper); }
+    h2 {
+      max-width: 16ch;
+      margin: 0 auto;
+      font-family: var(--display);
+      font-size: clamp(3.1rem, 7vw, 7rem);
+      font-weight: 400;
+      letter-spacing: -.06em;
+      line-height: .9;
+      text-wrap: balance;
+    }
+    .section-intro { max-width: 42rem; margin: 1.75rem auto 0; color: var(--text-soft); font-size: 1.05rem; }
+
+    .projects { display: grid; gap: clamp(7rem, 13vw, 13rem); }
+    .project { display: grid; gap: 2rem; }
+    .project__header {
+      display: grid;
+      grid-template-columns: 4rem minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 1.5rem;
+      width: min(100%, 76rem);
+      margin-inline: auto;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .project__number { color: var(--copper); }
+    .project__type { color: var(--muted); }
+    .project h3 {
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(2rem, 4vw, 4.5rem);
+      font-weight: 400;
+      letter-spacing: -.045em;
+      line-height: 1;
+    }
+    .project__description {
+      display: grid;
+      grid-template-columns: 1fr minmax(18rem, 34rem) 1fr;
+      gap: 2rem;
+      color: var(--text-soft);
+    }
+    .project__description p { grid-column: 2; margin: 0; text-align: center; }
+    .project__visual {
+      position: relative;
+      display: grid;
+      min-height: clamp(24rem, 55vw, 45rem);
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      transition: background 300ms var(--ease), transform 350ms var(--ease);
+    }
+    .project:nth-child(1) .project__visual { border-radius: 8rem 1.5rem 8rem 1.5rem; }
+    .project:nth-child(2) .project__visual { border-radius: 1.5rem 8rem 1.5rem 8rem; background: var(--surface-raised); }
+    .project:nth-child(3) .project__visual { border-radius: 50% 50% 2rem 2rem / 18% 18% 2rem 2rem; }
+    .project__visual::before {
+      position: absolute;
+      inset: clamp(1.2rem, 3vw, 2.5rem);
+      border: 1px solid var(--line);
+      border-radius: inherit;
+      content: "";
+    }
+    .project__visual:hover { background: var(--surface-raised); transform: scale(1.008); }
+    .project__placeholder { position: relative; max-width: 22rem; padding: 2rem; text-align: center; }
+    .project__placeholder strong { display: block; color: var(--sage); font-family: var(--display); font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 400; letter-spacing: -.04em; line-height: 1; }
+    .project__placeholder span { display: block; margin-top: .9rem; color: var(--muted); font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
+
+    .about { background: rgba(17, 21, 18, .86); }
+    .about__statement {
+      max-width: 60rem;
+      margin: 0 auto;
+      text-align: center;
+      font-family: var(--display);
+      font-size: clamp(2.2rem, 5vw, 5rem);
+      letter-spacing: -.05em;
+      line-height: 1.07;
+    }
+    .about__statement em { color: var(--sage); font-style: italic; }
+    .about__notes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      margin-top: clamp(4rem, 7vw, 7rem);
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+    .about__note { padding: 2rem; background: rgba(17, 21, 18, .9); text-align: left; }
+    .about__note span { color: var(--copper); font-family: var(--mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+    .about__note p { margin: 1.5rem 0 0; color: var(--text-soft); }
+
+    .entries { border-top: 1px solid var(--line-strong); }
+    .entry {
+      display: grid;
+      grid-template-columns: 8rem minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 2rem;
+      min-height: 9rem;
+      border-bottom: 1px solid var(--line);
+      transition: color 260ms var(--ease);
+    }
+    .entry:hover { color: var(--sage); }
+    .entry__kind { color: var(--copper); }
+    .entry__state { color: var(--muted); }
+    .entry h3 { margin: 0; font-family: var(--display); font-size: clamp(1.7rem, 3vw, 3rem); font-weight: 400; letter-spacing: -.04em; }
+    .entry p { margin: .2rem 0 0; color: var(--muted); }
+
+    .record { width: min(100%, 66rem); margin-inline: auto; }
+    .record__item {
+      display: grid;
+      grid-template-columns: 7rem minmax(0, 1fr);
+      gap: 2rem;
+      padding: 2.5rem 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .record__year { color: var(--sage); }
+    .record__item h3 { margin: 0 0 .45rem; font-family: var(--display); font-size: 1.8rem; font-weight: 400; letter-spacing: -.03em; }
+    .record__item p { margin: 0; color: var(--muted); }
+
+    .connect { overflow: hidden; background: rgba(21, 26, 23, .9); }
+    .connect::before {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: min(85vw, 72rem);
+      aspect-ratio: 1.8;
+      border: 1px solid rgba(174, 118, 87, .18);
+      border-radius: 48% 52% 44% 55%;
+      content: "";
+      transform: translate(-50%, -50%) rotate(-5deg);
+      pointer-events: none;
+    }
+    .connect .shell { position: relative; }
+    .links { width: min(100%, 56rem); margin: 4rem auto 0; border-top: 1px solid var(--line-strong); }
+    .social-slot {
+      position: relative;
+      display: flex;
+      min-height: 5.5rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      overflow: hidden;
+      padding-inline: 1.2rem;
+      border-bottom: 1px solid var(--line);
+      color: var(--text);
+      text-decoration: none;
+      transform: translateZ(0);
+      transition: border-color 260ms var(--ease), transform 320ms var(--ease);
+    }
+    .social-slot::before {
+      position: absolute;
+      inset: 0;
+      background: var(--sage-deep);
+      content: "";
+      clip-path: circle(0 at 50% 50%);
+      transition: clip-path 480ms var(--ease);
+    }
+    .social-slot strong,
+    .social-slot span { position: relative; z-index: 1; transition: color 260ms var(--ease); }
+    .social-slot strong { font-family: var(--display); font-size: 1.65rem; font-weight: 400; }
+    .social-slot span { color: var(--muted); font-family: var(--mono); font-size: .66rem; letter-spacing: .09em; text-transform: uppercase; }
+    .social-slot:hover { border-color: transparent; transform: scale(1.012); }
+    .social-slot:hover::before { clip-path: circle(75% at 50% 50%); }
+    .social-slot:hover span { color: var(--text-soft); }
+
+    .footer { border-top: 1px solid var(--line); }
+    .footer__inner { display: flex; min-height: 7rem; align-items: center; justify-content: space-between; gap: 2rem; color: var(--muted); }
+    .footer p { margin: 0; font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; }
+    .footer a { color: var(--text-soft); text-decoration: none; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(1.5rem); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @supports (animation-timeline: view()) {
+      .reveal {
+        animation: reveal var(--ease) both;
+        animation-range: entry 0% cover 32%;
+        animation-timeline: view();
+      }
+      @keyframes reveal {
+        from { opacity: .08; transform: translateY(2.5rem) scale(.988); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    }
+
+    @media (max-width: 50rem) {
+      .shell { width: min(calc(100% - 1.5rem), var(--max)); }
+      .masthead__inner { min-height: 4.25rem; }
+      .brand__name { display: none; }
+      .nav a:nth-child(3) { display: none; }
+      .hero { padding: 7rem 0 3rem; }
+      .hero::before { width: 100vw; }
+      .hero::after { width: 82vw; }
+      h1 { font-size: clamp(4rem, 20vw, 7rem); }
+      .hero__footer { bottom: -4.5rem; }
+      .project__header { grid-template-columns: 2.5rem minmax(0, 1fr); }
+      .project__type { grid-column: 2; }
+      .project__description { grid-template-columns: 1fr; }
+      .project__description p { grid-column: 1; }
+      .project__visual { min-height: 24rem; }
+      .project:nth-child(1) .project__visual,
+      .project:nth-child(2) .project__visual { border-radius: 4rem 1rem; }
+      .about__notes { grid-template-columns: 1fr; }
+      .entry { grid-template-columns: 1fr auto; gap: .65rem 1rem; padding: 1.5rem 0; }
+      .entry__kind { grid-column: 1; }
+      .entry__state { grid-column: 2; grid-row: 1; }
+      .entry div { grid-column: 1 / -1; }
+      .record__item { grid-template-columns: 1fr; gap: .8rem; }
+      .footer__inner { min-height: 6rem; align-items: start; flex-direction: column; justify-content: center; gap: .35rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body id="top">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <canvas id="pixel-background" width="128" height="1072" aria-hidden="true"></canvas>
+  <div class="background-veil" aria-hidden="true"></div>
+
+  <header class="masthead">
+    <div class="masthead__inner shell">
+      <a class="brand" href="#top" aria-label="Sebastian Tait Anderson, home">
+        <span class="brand__mark" aria-hidden="true">SA</span>
+        <span class="brand__name">Sebastian Tait Anderson</span>
+      </a>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="#work">Work</a>
+        <a href="#about">About</a>
+        <a href="#writing">Writing</a>
+        <a href="#connect">Connect</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero shell" aria-labelledby="hero-title">
+      <div class="hero__content">
+        <p class="hero__meta">Developer / builder / writer</p>
+        <h1 id="hero-title"><span>Sebastian</span><span class="name-middle">Tait</span><span>Anderson</span></h1>
+        <p class="hero__intro">I build considered software and write about the ideas behind it—clean systems, strong interfaces, and work designed to hold up under use.</p>
+        <div class="hero__footer">
+          <span>Independent portfolio / 2026</span>
+          <a href="#work">Selected work ↓</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="work" aria-labelledby="work-title">
+      <div class="shell">
+        <header class="section-heading reveal">
+          <span class="section-label">01 / Selected work</span>
+          <h2 id="work-title">A few things worth opening up.</h2>
+          <p class="section-intro">Each project belongs here as a complete story: the problem, the decisions, the finished result, and what changed because it existed.</p>
+        </header>
+
+        <div class="projects">
+          <article class="project reveal">
+            <header class="project__header">
+              <span class="project__number">01</span>
+              <h3>End-to-end product</h3>
+              <span class="project__type">Case study</span>
+            </header>
+            <div class="project__description"><p>Your strongest complete build goes here, with a concise explanation of the challenge and the result.</p></div>
+            <div class="project__visual" aria-label="Reserved for project imagery">
+              <div class="project__placeholder"><strong>Project one</strong><span>Large visual / case study ready</span></div>
+            </div>
+          </article>
+
+          <article class="project reveal">
+            <header class="project__header">
+              <span class="project__number">02</span>
+              <h3>Technical experiment</h3>
+              <span class="project__type">Exploration</span>
+            </header>
+            <div class="project__description"><p>A focused prototype, tool, or technical exploration—small enough to understand and strong enough to remember.</p></div>
+            <div class="project__visual" aria-label="Reserved for project imagery">
+              <div class="project__placeholder"><strong>Project two</strong><span>Large visual / project link ready</span></div>
+            </div>
+          </article>
+
+          <article class="project reveal">
+            <header class="project__header">
+              <span class="project__number">03</span>
+              <h3>Built in public</h3>
+              <span class="project__type">Open work</span>
+            </header>
+            <div class="project__description"><p>A useful open-source contribution, public build, or piece of work others can inspect and reuse.</p></div>
+            <div class="project__visual" aria-label="Reserved for project imagery">
+              <div class="project__placeholder"><strong>Project three</strong><span>Large visual / repository ready</span></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section about" id="about" aria-labelledby="about-title">
+      <div class="shell reveal">
+        <header class="section-heading">
+          <span class="section-label">02 / About</span>
+          <h2 id="about-title" class="about__statement">I care about the point where <em>technical clarity</em> becomes a better human experience.</h2>
+        </header>
+        <div class="about__notes">
+          <article class="about__note"><span>Approach</span><p>Reduce the problem until the essential thing is obvious, then build that part exceptionally well.</p></article>
+          <article class="about__note"><span>Interests</span><p>Software, useful tools, durable interfaces, and the systems that make ambitious work maintainable.</p></article>
+          <article class="about__note"><span>Standard</span><p>Fast, legible, accessible, and intentional enough that every element can explain why it exists.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="writing" aria-labelledby="writing-title">
+      <div class="shell">
+        <header class="section-heading reveal">
+          <span class="section-label">03 / Writing</span>
+          <h2 id="writing-title">Notes from the work.</h2>
+          <p class="section-intro">Long-form thinking when the subject deserves room; short field notes when it doesn’t.</p>
+        </header>
+        <div class="entries reveal">
+          <article class="entry"><span class="entry__kind">Essays</span><div><h3>Ideas that need room</h3><p>Software, systems, craft, and the choices behind the output.</p></div><span class="entry__state">Opening soon</span></article>
+          <article class="entry"><span class="entry__kind">Posts</span><div><h3>What I learned building it</h3><p>Practical notes, useful mistakes, and the occasional strong opinion.</p></div><span class="entry__state">Opening soon</span></article>
+          <article class="entry"><span class="entry__kind">Now</span><div><h3>A current working log</h3><p>What has my attention, what changed, and what comes next.</p></div><span class="entry__state">Opening soon</span></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="record" aria-labelledby="record-title">
+      <div class="shell">
+        <header class="section-heading reveal">
+          <span class="section-label">04 / Record</span>
+          <h2 id="record-title">Signal, not noise.</h2>
+          <p class="section-intro">A selective record for milestones, achievements, talks, releases, and recognition that says something real about the work.</p>
+        </header>
+        <div class="record reveal">
+          <article class="record__item"><span class="record__year">Recognition</span><div><h3>Awards &amp; acknowledgment</h3><p>Notable recognition belongs here when there is something worth recording.</p></div></article>
+          <article class="record__item"><span class="record__year">Milestones</span><div><h3>Releases &amp; results</h3><p>Major launches, measurable outcomes, and work that reached people.</p></div></article>
+          <article class="record__item"><span class="record__year">Community</span><div><h3>Talks &amp; contribution</h3><p>Teaching, speaking, mentoring, and useful participation.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section connect" id="connect" aria-labelledby="connect-title">
+      <div class="shell reveal">
+        <header class="section-heading">
+          <span class="section-label">05 / Elsewhere</span>
+          <h2 id="connect-title">Find me on the internet.</h2>
+          <p class="section-intro">Social, professional, and direct links have a permanent home here.</p>
+        </header>
+        <div class="links" aria-label="Contact links">
+          <a class="social-slot" href="https://github.com/Xendon-Arakani" target="_blank" rel="me noopener noreferrer">
+            <strong>GitHub</strong><span>Xendon-Arakani ↗</span>
+          </a>
+          <a class="social-slot" href="https://www.linkedin.com/in/xendon-arakani-5880a743b/" target="_blank" rel="me noopener noreferrer">
+            <strong>LinkedIn</strong><span>View profile ↗</span>
+          </a>
+          <a class="social-slot" href="https://x.com/XendonAAA" target="_blank" rel="me noopener noreferrer">
+            <strong>X</strong><span>@XendonAAA ↗</span>
+          </a>
+          <a class="social-slot" href="mailto:xendonara@gmail.com">
+            <strong>Email</strong><span>xendonara@gmail.com ↗</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner shell">
+      <p>© 2026 Sebastian Tait Anderson</p>
+      <p><a href="#top">Back to top ↑</a></p>
+    </div>
+  </footer>
+  <script type="module" src="pixel-background.js"></script>
+</body>
+</html>
