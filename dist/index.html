@@ -28,13 +28,14 @@
       --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       --max: 86rem;
       --reading: 52rem;
+      --masthead-height: 4.75rem;
       --ease: cubic-bezier(.2, .75, .25, 1);
     }
 
     * { box-sizing: border-box; }
     html {
       scroll-behavior: smooth;
-      scroll-padding-top: 5.75rem;
+      scroll-padding-top: calc(var(--masthead-height) + 1rem);
     }
     body {
       position: relative;
@@ -65,12 +66,32 @@
     }
     #edge-light {
       position: fixed;
-      z-index: 2;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      mix-blend-mode: screen;
+      z-index: 40;
+      inset: var(--masthead-height) 0 0;
+      contain: strict;
       pointer-events: none;
+    }
+    #edge-light::before,
+    #edge-light::after {
+      position: absolute;
+      right: 0;
+      left: 0;
+      height: 25%;
+      background: rgba(255, 255, 255, .001);
+      content: "";
+      backdrop-filter: blur(clamp(8px, 1.25vh, 16px)) brightness(3.2) contrast(1.12);
+      -webkit-backdrop-filter: blur(clamp(8px, 1.25vh, 16px)) brightness(3.2) contrast(1.12);
+      will-change: backdrop-filter;
+    }
+    #edge-light::before {
+      top: 0;
+      mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
+    }
+    #edge-light::after {
+      bottom: 0;
+      mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .56) 25%, rgba(0, 0, 0, .25) 50%, rgba(0, 0, 0, .06) 75%, transparent 100%);
     }
     .background-veil {
       position: absolute;
@@ -80,7 +101,7 @@
       pointer-events: none;
     }
     main,
-    .footer { position: relative; z-index: 3; }
+    .footer { position: relative; z-index: 2; }
 
     .skip-link {
       position: fixed;
@@ -99,7 +120,7 @@
 
     .masthead {
       position: fixed;
-      z-index: 30;
+      z-index: 50;
       inset: 0 0 auto;
       border-bottom: 1px solid transparent;
       background: rgba(13, 16, 15, .88);
@@ -107,7 +128,7 @@
     }
     .masthead__inner {
       display: flex;
-      min-height: 4.75rem;
+      min-height: var(--masthead-height);
       align-items: center;
       justify-content: space-between;
       gap: 2rem;
@@ -476,9 +497,8 @@
     }
 
     @media (max-width: 50rem) {
-      html { scroll-padding-top: 5.25rem; }
+      :root { --masthead-height: 4.25rem; }
       .shell { width: min(calc(100% - 1.5rem), var(--max)); }
-      .masthead__inner { min-height: 4.25rem; }
       .brand__name { display: none; }
       .nav a:nth-child(3) { display: none; }
       .hero { padding: 7rem 0 3rem; }
@@ -529,7 +549,7 @@
 <body id="top">
   <a class="skip-link" href="#main">Skip to content</a>
   <canvas id="pixel-background" width="128" height="1072" aria-hidden="true"></canvas>
-  <canvas id="edge-light" aria-hidden="true"></canvas>
+  <div id="edge-light" aria-hidden="true"></div>
   <div class="background-veil" aria-hidden="true"></div>
 
   <header class="masthead">

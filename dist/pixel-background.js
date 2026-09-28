@@ -9,11 +9,8 @@ const TRANSITION_TICKS = 24;
 const SELECTION_COUNT = Math.round(PIXEL_COUNT * 0.01);
 const FULL_TRANSFER_TICKS = Math.ceil(PIXEL_COUNT / SELECTION_COUNT) + TRANSITION_TICKS;
 const FULL_IMAGE_HOLD_TICKS = FULL_TRANSFER_TICKS;
-const EDGE_REACH = 0.25;
-const EDGE_LIGHT_STRENGTH = 0.82;
 
 const canvas = document.querySelector("#pixel-background");
-const edgeCanvas = document.querySelector("#edge-light");
 const imageUrls = [
   "assets/alien-jungle-1.png",
   "assets/alien-jungle-2.png",
@@ -81,203 +78,6 @@ function createImageTexture(gl, image, unit) {
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
   return texture;
-}
-
-function createEdgeLightRenderer(images, stateData) {
-  if (!edgeCanvas) return null;
-
-  const gl = edgeCanvas.getContext("webgl2", {
-    alpha: true,
-    antialias: false,
-    depth: false,
-    powerPreference: "low-power",
-    premultipliedAlpha: true,
-    preserveDrawingBuffer: false,
-    stencil: false,
-  });
-
-  if (!gl) {
-    edgeCanvas.dataset.renderer = "unavailable";
-    return null;
-  }
-
-  const vertexSource = `#version 300 es
-    in vec2 a_position;
-    out vec2 v_uv;
-
-    void main() {
-      v_uv = (a_position + 1.0) * 0.5;
-      gl_Position = vec4(a_position, 0.0, 1.0);
-    }
-  `;
-
-  const fragmentSource = `#version 300 es
-    precision highp float;
-
-    in vec2 v_uv;
-    out vec4 out_color;
-
-    uniform sampler2D u_image_0;
-    uniform sampler2D u_image_1;
-    uniform sampler2D u_image_2;
-    uniform sampler2D u_edge_state;
-    uniform float u_tick_mod;
-    uniform float u_top_image_y;
-    uniform float u_bottom_image_y;
-
-    vec4 image_pixel(int image_index, vec2 uv) {
-      if (image_index == 1) {
-        return texture(u_image_1, uv);
-      }
-      if (image_index == 2) {
-        return texture(u_image_2, uv);
-      }
-      return texture(u_image_0, uv);
-    }
-
-    vec3 animated_edge_pixel(float image_y, float state_y) {
-      vec4 state = texture(u_edge_state, vec2(v_uv.x, state_y));
-      int source_index = int(floor(state.r * 255.0 + 0.5));
-      int target_index = int(floor(state.g * 255.0 + 0.5));
-      float start_tick = floor(state.b * 255.0 + 0.5);
-      float is_active = step(0.5, state.a);
-      float elapsed_ticks = mod(u_tick_mod - start_tick + 256.0, 256.0);
-      float interpolation = is_active * clamp(elapsed_ticks / ${TRANSITION_TICKS.toFixed(1)}, 0.0, 1.0);
-      vec2 image_uv = vec2(v_uv.x, image_y);
-
-      return mix(
-        image_pixel(source_index, image_uv),
-        image_pixel(target_index, image_uv),
-        interpolation
-      ).rgb;
-    }
-
-    void main() {
-      bool use_top_edge = v_uv.y >= 0.5;
-      float distance_from_edge = use_top_edge ? 1.0 - v_uv.y : v_uv.y;
-      float falloff = max(0.0, 1.0 - distance_from_edge / ${EDGE_REACH.toFixed(2)});
-      falloff *= falloff;
-
-      float image_y = use_top_edge ? u_top_image_y : u_bottom_image_y;
-      float state_y = use_top_edge ? 0.25 : 0.75;
-      vec3 edge_color = animated_edge_pixel(image_y, state_y);
-      float alpha = falloff * ${EDGE_LIGHT_STRENGTH.toFixed(2)};
-
-      out_color = vec4(edge_color * alpha, alpha);
-    }
-  `;
-
-  const program = createProgram(gl, vertexSource, fragmentSource);
-  gl.useProgram(program);
-
-  const positionBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-    -1, -1,
-     3, -1,
-    -1,  3,
-  ]), gl.STATIC_DRAW);
-
-  const positionLocation = gl.getAttribLocation(program, "a_position");
-  gl.enableVertexAttribArray(positionLocation);
-  gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-  images.forEach((image, index) => createImageTexture(gl, image, index));
-  gl.uniform1i(gl.getUniformLocation(program, "u_image_0"), 0);
-  gl.uniform1i(gl.getUniformLocation(program, "u_image_1"), 1);
-  gl.uniform1i(gl.getUniformLocation(program, "u_image_2"), 2);
-
-  const edgeStateData = new Uint8Array(WIDTH * 2 * 4);
-  const edgeStateTexture = gl.createTexture();
-  gl.activeTexture(gl.TEXTURE3);
-  gl.bindTexture(gl.TEXTURE_2D, edgeStateTexture);
-  configureTexture(gl);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, WIDTH, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, edgeStateData);
-  gl.uniform1i(gl.getUniformLocation(program, "u_edge_state"), 3);
-
-  const tickLocation = gl.getUniformLocation(program, "u_tick_mod");
-  const topImageYLocation = gl.getUniformLocation(program, "u_top_image_y");
-  const bottomImageYLocation = gl.getUniformLocation(program, "u_bottom_image_y");
-  let lastStateRevision = -1;
-  let lastTopRow = -1;
-  let lastBottomRow = -1;
-
-  function resizeToViewport() {
-    const pixelRatio = Math.max(1, window.devicePixelRatio || 1);
-    const displayWidth = Math.max(1, Math.round(window.innerWidth * pixelRatio));
-    const displayHeight = Math.max(1, Math.round(window.innerHeight * pixelRatio));
-
-    if (edgeCanvas.width !== displayWidth || edgeCanvas.height !== displayHeight) {
-      edgeCanvas.width = displayWidth;
-      edgeCanvas.height = displayHeight;
-    }
-
-    gl.viewport(0, 0, displayWidth, displayHeight);
-  }
-
-  function copyStateRow(sourceRow, destinationRow) {
-    const rowLength = WIDTH * 4;
-    const sourceStart = sourceRow * rowLength;
-    edgeStateData.set(
-      stateData.subarray(sourceStart, sourceStart + rowLength),
-      destinationRow * rowLength,
-    );
-  }
-
-  function render(tickModulo, stateRevision) {
-    resizeToViewport();
-
-    const documentHeight = Math.max(
-      document.documentElement.scrollHeight,
-      document.body.scrollHeight,
-      1,
-    );
-    const topDocumentY = Math.max(0, Math.min(window.scrollY + 0.5, documentHeight - 0.5));
-    const bottomDocumentY = Math.max(
-      0,
-      Math.min(window.scrollY + window.innerHeight - 0.5, documentHeight - 0.5),
-    );
-    const topProgress = topDocumentY / documentHeight;
-    const bottomProgress = bottomDocumentY / documentHeight;
-    const topRow = Math.min(HEIGHT - 1, Math.floor(topProgress * HEIGHT));
-    const bottomRow = Math.min(HEIGHT - 1, Math.floor(bottomProgress * HEIGHT));
-
-    if (
-      stateRevision !== lastStateRevision
-      || topRow !== lastTopRow
-      || bottomRow !== lastBottomRow
-    ) {
-      copyStateRow(topRow, 0);
-      copyStateRow(bottomRow, 1);
-      gl.activeTexture(gl.TEXTURE3);
-      gl.bindTexture(gl.TEXTURE_2D, edgeStateTexture);
-      gl.texSubImage2D(
-        gl.TEXTURE_2D,
-        0,
-        0,
-        0,
-        WIDTH,
-        2,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        edgeStateData,
-      );
-      lastStateRevision = stateRevision;
-      lastTopRow = topRow;
-      lastBottomRow = bottomRow;
-    }
-
-    gl.useProgram(program);
-    gl.uniform1f(tickLocation, tickModulo);
-    gl.uniform1f(topImageYLocation, 1 - topProgress);
-    gl.uniform1f(bottomImageYLocation, 1 - bottomProgress);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-  }
-
-  edgeCanvas.dataset.renderer = "webgl2";
-  edgeCanvas.dataset.edgeReach = String(EDGE_REACH);
-  return { render };
 }
 
 async function startPixelBackground() {
@@ -383,7 +183,6 @@ async function startPixelBackground() {
   let targetPhase = 1;
   let settledAtTick = null;
   let settledFrameShown = false;
-  let stateRevision = 0;
 
   sourceIndices.fill(initialImage);
   targetIndices.fill(initialImage);
@@ -405,7 +204,6 @@ async function startPixelBackground() {
   gl.uniform1i(gl.getUniformLocation(program, "u_state"), 3);
 
   const tickLocation = gl.getUniformLocation(program, "u_tick_mod");
-  const edgeLight = createEdgeLightRenderer(images, stateData);
 
   function writePixelState(pixel) {
     const offset = pixel * 4;
@@ -493,7 +291,6 @@ async function startPixelBackground() {
     canvas.dataset.targetImage = String(currentTargetImage + 1);
     canvas.dataset.targetPhase = String(targetPhase);
     canvas.dataset.targetCompletion = (settledToTarget / PIXEL_COUNT).toFixed(4);
-    stateRevision += 1;
   }
 
   rebuildEligiblePixels();
@@ -541,7 +338,6 @@ async function startPixelBackground() {
       gl.viewport(0, 0, WIDTH, HEIGHT);
       gl.uniform1f(tickLocation, tickModulo);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
-      edgeLight?.render(tickModulo, stateRevision);
 
       if (settledAtTick !== null) {
         settledFrameShown = true;
