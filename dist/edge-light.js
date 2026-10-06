@@ -1,4 +1,4 @@
-const EDGE_REACH = 0.24;
+const EDGE_REACH = 0.25;
 const EDGE_HOVER_TARGET_SELECTOR = [
   ".project__visual",
   ".entry",
@@ -105,8 +105,8 @@ function syncEdgeLightGeometry() {
     ),
   );
   const physicalApertureHeight = physicalViewportHeight - physicalMastheadBottom;
-  const physicalTopBandHeight = Math.max(1, Math.floor(physicalApertureHeight / 2));
-  const physicalBottomBandHeight = Math.max(1, physicalApertureHeight - physicalTopBandHeight);
+  const physicalTopBandHeight = Math.max(1, Math.floor(physicalApertureHeight * EDGE_REACH));
+  const physicalBottomBandHeight = physicalTopBandHeight;
   const layoutHeight = Math.max(
     root.getBoundingClientRect().height,
     document.body.getBoundingClientRect().height,

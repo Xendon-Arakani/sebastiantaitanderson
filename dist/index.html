@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Sebastian Tait Anderson — software developer and writer.">
+  <meta name="description" content="Sebastian Tait Anderson — software developer.">
   <meta name="theme-color" content="#0d100f">
   <title>Sebastian Tait Anderson — Developer</title>
   <link rel="canonical" href="https://sebastiantaitanderson.com/">
@@ -33,8 +33,8 @@
       --edge-scroll-y: 0px;
       --edge-document-height: 100vh;
       --edge-viewport-height: 100vh;
-      --edge-top-band-height: 50vh;
-      --edge-bottom-band-height: 50vh;
+      --edge-top-band-height: 25vh;
+      --edge-bottom-band-height: 25vh;
       --ease: cubic-bezier(.2, .75, .25, 1);
     }
 
@@ -57,7 +57,7 @@
       isolation: isolate;
     }
     a { color: inherit; }
-    a:focus-visible { outline: 2px solid var(--copper); outline-offset: 5px; }
+    a:focus-visible, button:focus-visible { outline: 2px solid var(--copper); outline-offset: 5px; }
     ::selection { background: var(--sage); color: var(--night); }
 
     #pixel-background {
@@ -100,14 +100,14 @@
     .edge-light__band--top {
       top: 0;
       height: var(--edge-top-band-height);
-      mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, rgba(0, 0, 0, .105) 100%);
-      -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, rgba(0, 0, 0, .105) 100%);
+      mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, transparent 100%);
     }
     .edge-light__band--bottom {
       bottom: 0;
       height: var(--edge-bottom-band-height);
-      mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, rgba(0, 0, 0, .105) 100%);
-      -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, rgba(0, 0, 0, .105) 100%);
+      mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .489) 25%, rgba(0, 0, 0, .208) 50%, rgba(0, 0, 0, .126) 75%, transparent 100%);
     }
     .edge-light__page-copy {
       position: absolute;
@@ -357,6 +357,7 @@
     }
     .hero__footer a[data-hovered] { border-color: var(--sage); color: var(--text); transform: scale(1.035); }
     .hero__footer a[data-hovered]::before { opacity: 1; transform: scale(1); }
+    .hero__preface { max-width: 42rem; margin: 2.5rem auto 0; color: var(--text-soft); font-size: 1rem; }
 
     .section { position: relative; padding: clamp(6rem, 11vw, 11rem) 0; border-top: 1px solid var(--line); }
     .section-heading { margin-bottom: clamp(4rem, 7vw, 7rem); text-align: center; }
@@ -426,6 +427,11 @@
     .project__placeholder { position: relative; max-width: 22rem; padding: 2rem; text-align: center; }
     .project__placeholder strong { display: block; color: var(--sage); font-family: var(--display); font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 400; letter-spacing: -.04em; line-height: 1; }
     .project__placeholder span { display: block; margin-top: .9rem; color: var(--muted); font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
+
+    .project__links { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem 2rem; margin: 1.5rem 0; }
+    .project__links a { color: var(--sage); text-underline-offset: .25em; }
+    .project__release-note { max-width: 42rem; margin: 1rem auto 2rem; color: var(--text-soft); font-size: .85rem; text-align: center; }
+    .project__screenshot { position: relative; display: block; width: min(calc(100% - 3rem), 58rem); height: auto; border-radius: .5rem; box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, .3); }
 
     .about { background: rgba(17, 21, 18, .86); }
     .about__statement {
@@ -508,6 +514,7 @@
       transform: translateZ(0);
       transition: border-color 260ms var(--ease), transform 320ms var(--ease);
     }
+    button.social-slot { width: 100%; padding-block: 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
     .social-slot::before {
       position: absolute;
       inset: 0;
@@ -608,7 +615,7 @@
 
   <header class="masthead">
     <div class="masthead__inner shell">
-      <a class="brand" href="#top" aria-label="Sebastian Tait Anderson, home">
+      <a class="brand" href="#top" aria-label="Sebastian Tait Anderson home">
         <span class="brand__mark" aria-hidden="true">SA</span>
         <span class="brand__name">Sebastian Tait Anderson</span>
       </a>
@@ -624,13 +631,14 @@
   <main id="main">
     <section class="hero shell" aria-labelledby="hero-title">
       <div class="hero__content">
-        <p class="hero__meta">Software developer / writer</p>
+        <p class="hero__meta">Software developer</p>
         <h1 id="hero-title"><span>Sebastian</span><span class="name-middle">Tait</span><span>Anderson</span></h1>
         <p class="hero__intro">I build programs around the true structure of a problem: exact enough for the task at hand, abstract enough that new capabilities become natural consequences of the system.</p>
         <div class="hero__footer">
           <span>Portfolio / 2026</span>
-          <a href="#work">Selected work ↓</a>
+          <a href="#work">My Projects ↓</a>
         </div>
+        <p class="hero__preface">I’m developing these personal programs around gaps I see in research and processes I want to understand. Each is an ongoing experiment with a working result.</p>
       </div>
     </section>
 
@@ -638,44 +646,55 @@
       <div class="shell">
         <header class="section-heading reveal">
           <span class="section-label">01 / Work</span>
-          <h2 id="work-title">Selected projects.</h2>
-          <p class="section-intro">Programs, experiments, and open work.</p>
+          <h2 id="work-title">My Projects</h2>
+          <p class="section-intro">Personal Programs and experiments in development.</p>
         </header>
 
         <div class="projects">
-          <article class="project reveal">
+          <article class="project reveal" id="background-kernel" data-release-stage="progress" data-featured="true">
             <header class="project__header">
               <span class="project__number">01</span>
-              <h3>End-to-end product</h3>
-              <span class="project__type">Case study</span>
+              <h3>Windows Background Kernel</h3>
             </header>
-            <div class="project__description"><p>Your strongest complete build goes here, with a concise explanation of the challenge and the result.</p></div>
-            <div class="project__visual" aria-label="Reserved for project imagery">
-              <div class="project__placeholder"><strong>Project one</strong><span>Large visual / case study ready</span></div>
+            <div class="project__description"><p>This Windows background host separates scene control from rendering so that visual scenes can run independently. Its live audio scene maps stereo balance and loudness to luminous trails whose illumination is calculated from physical room and screen geometry.</p></div>
+            <div class="project__links">
+              <a href="https://github.com/Xendon-Arakani/Background_Kernel" target="_blank" rel="noopener noreferrer">Repository ↗</a>
             </div>
           </article>
-
-          <article class="project reveal">
+          <article class="project reveal" id="dpi-modifier" data-release-stage="progress">
             <header class="project__header">
               <span class="project__number">02</span>
-              <h3>Technical experiment</h3>
-              <span class="project__type">Exploration</span>
+              <h3>Passive E-Sports Aiming Trainer</h3>
             </header>
-            <div class="project__description"><p>A focused prototype, tool, or technical exploration—small enough to understand and strong enough to remember.</p></div>
-            <div class="project__visual" aria-label="Reserved for project imagery">
-              <div class="project__placeholder"><strong>Project two</strong><span>Large visual / project link ready</span></div>
+            <div class="project__description"><p>The controller mixes a recurring baseline DPI with randomized sensitivity changes. This passive aiming experiment is designed to train hand–eye coordination through visual feedback across movement scales and strengthen later predictive aiming through learned visual priors.</p></div>
+            <div class="project__links">
+              <a href="https://github.com/Xendon-Arakani/DPI_Modifier" target="_blank" rel="noopener noreferrer">Repository ↗</a>
+              <a href="https://github.com/Xendon-Arakani/DPI_Modifier/releases/tag/v0.1.0-progress.2" target="_blank" rel="noopener noreferrer">Progress release ↗</a>
+              <a href="https://github.com/Xendon-Arakani/DPI_Modifier/releases/download/v0.1.0-progress.2/DPI_Modifier_Setup.exe">Windows installer ↓</a>
             </div>
           </article>
-
-          <article class="project reveal">
+          <article class="project reveal" id="gd-laydec-engine" data-release-stage="progress">
             <header class="project__header">
               <span class="project__number">03</span>
-              <h3>Built in public</h3>
-              <span class="project__type">Open work</span>
+              <h3>Geometry Dash [LLDM]</h3>
             </header>
-            <div class="project__description"><p>A useful open-source contribution, public build, or piece of work others can inspect and reuse.</p></div>
-            <div class="project__visual" aria-label="Reserved for project imagery">
-              <div class="project__placeholder"><strong>Project three</strong><span>Large visual / repository ready</span></div>
+            <div class="project__description"><p>This experimental Geometry Dash mod is being developed to learn decoration from copied levels through reinforcement learning. Its training pipeline pairs gameplay structure with decoration targets and conditions regional learning on music and nearby decoration.</p></div>
+            <div class="project__links">
+              <a href="https://github.com/Xendon-Arakani/GD_LayDec_Engine" target="_blank" rel="noopener noreferrer">Repository ↗</a>
+              <a href="https://github.com/Xendon-Arakani/GD_LayDec_Engine/releases/tag/v0.0.1-progress.2" target="_blank" rel="noopener noreferrer">Progress release ↗</a>
+              <a href="https://github.com/Xendon-Arakani/GD_LayDec_Engine/releases/download/v0.0.1-progress.2/gd-layout-windows.zip">Windows download ↓</a>
+            </div>
+          </article>
+          <article class="project reveal" id="chemosound" data-release-stage="progress">
+            <header class="project__header">
+              <span class="project__number">04</span>
+              <h3>Chemosound</h3>
+            </header>
+            <div class="project__description"><p>This experiment works toward reinforcement learning on molecular structures. It asks whether the frequency relationships in the molecular spectra of dopamine and serotonin resemble those in music more closely than those in controls derived from the same songs. Its comparison tools create those controls by shifting each musical frequency band in time.</p></div>
+            <div class="project__links">
+              <a href="https://github.com/Xendon-Arakani/Chemosound-progress" target="_blank" rel="noopener noreferrer">Repository ↗</a>
+              <a href="https://github.com/Xendon-Arakani/Chemosound-progress/releases/tag/v0.1.0-progress.1" target="_blank" rel="noopener noreferrer">Progress release ↗</a>
+              <a href="https://github.com/Xendon-Arakani/Chemosound-progress/releases/download/v0.1.0-progress.1/portable.zip">Windows download ↓</a>
             </div>
           </article>
         </div>
@@ -689,9 +708,9 @@
           <h2 id="about-title" class="about__statement">How I work.</h2>
         </header>
         <div class="about__notes">
-          <article class="about__note"><span>Approach</span><p>I build programs around the distinctions that change their behavior, so new cases are handled by the model rather than added as exceptions.</p></article>
-          <article class="about__note"><span>Process</span><p>I test a premise through the consequences it produces, using their direction to decide whether the premise should continue shaping the work.</p></article>
-          <article class="about__note"><span>Constraint</span><p>I fit each program to the work it must do, with every additional layer justified by a demand that work actually creates.</p></article>
+          <article class="about__note"><span>Approach</span><p>I build personal programs around the distinctions that change their behavior. The model then handles new cases rather than adding them as exceptions.</p></article>
+          <article class="about__note"><span>Process</span><p>I test a premise through the consequences it produces. Their direction helps me decide whether that premise should continue shaping the work.</p></article>
+          <article class="about__note"><span>Constraint</span><p>I fit each program to the work it must do. Every additional layer is justified by a demand that work actually creates.</p></article>
         </div>
       </div>
     </section>
@@ -701,11 +720,11 @@
         <header class="section-heading reveal">
           <span class="section-label">03 / Writing</span>
           <h2 id="writing-title">Writing.</h2>
-          <p class="section-intro">Essays, project notes, and shorter observations.</p>
+          <p class="section-intro">Essays and project notes alongside shorter observations.</p>
         </header>
         <div class="entries reveal">
           <article class="entry"><span class="entry__kind">Essays</span><div><h3>Long-form writing</h3><p>Arguments and investigations that need more room.</p></div><span class="entry__state">Coming soon</span></article>
-          <article class="entry"><span class="entry__kind">Posts</span><div><h3>Project notes</h3><p>Methods, decisions, results, and mistakes from ongoing work.</p></div><span class="entry__state">Coming soon</span></article>
+          <article class="entry"><span class="entry__kind">Posts</span><div><h3>Project notes</h3><p>Project notes cover the methods and decisions behind ongoing work as well as its results and mistakes.</p></div><span class="entry__state">Coming soon</span></article>
           <article class="entry"><span class="entry__kind">Now</span><div><h3>Current work</h3><p>A short record of what I am working on and considering now.</p></div><span class="entry__state">Coming soon</span></article>
         </div>
       </div>
@@ -716,12 +735,12 @@
         <header class="section-heading reveal">
           <span class="section-label">04 / Record</span>
           <h2 id="record-title">Achievements.</h2>
-          <p class="section-intro">Awards, releases, results, talks, and contributions.</p>
+          <p class="section-intro">A record of awards and releases alongside results from my work as well as talks and contributions.</p>
         </header>
         <div class="record reveal">
           <article class="record__item"><span class="record__year">Recognition</span><div><h3>Awards &amp; recognition</h3><p>Selected awards and formal recognition.</p></div></article>
-          <article class="record__item"><span class="record__year">Milestones</span><div><h3>Releases &amp; results</h3><p>Launches, published work, and measurable outcomes.</p></div></article>
-          <article class="record__item"><span class="record__year">Community</span><div><h3>Talks &amp; contributions</h3><p>Speaking, teaching, mentoring, and open-source work.</p></div></article>
+          <article class="record__item"><span class="record__year">Milestones</span><div><h3>Releases &amp; results</h3><p>Launches and published work with measurable outcomes.</p></div></article>
+          <article class="record__item"><span class="record__year">Community</span><div><h3>Talks &amp; contributions</h3><p>Speaking and teaching alongside mentoring and open-source work.</p></div></article>
         </div>
       </div>
     </section>
@@ -743,9 +762,9 @@
           <a class="social-slot" href="https://x.com/XendonAAA" target="_blank" rel="me noopener noreferrer">
             <strong>X</strong><span>@XendonAAA ↗</span>
           </a>
-          <a class="social-slot" href="mailto:xendonara@gmail.com">
-            <strong>Email</strong><span>xendonara@gmail.com ↗</span>
-          </a>
+          <button class="social-slot" id="copy-email" type="button" data-email="xendonara@gmail.com" aria-label="Copy email address">
+            <strong>Email</strong><span aria-live="polite">xendonara@gmail.com ⧉</span>
+          </button>
         </div>
       </div>
     </section>
@@ -758,7 +777,8 @@
     </div>
   </footer>
   <script src="pointer-state.js"></script>
-  <script src="edge-light.js?v=12"></script>
-  <script type="module" src="pixel-background.js?v=12"></script>
+  <script src="contact.js"></script>
+  <script src="edge-light.js?v=13"></script>
+  <script type="module" src="pixel-background.js?v=13"></script>
 </body>
 </html>

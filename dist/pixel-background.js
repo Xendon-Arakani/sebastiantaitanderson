@@ -168,8 +168,8 @@ function createEdgeRenderer(images, initialState) {
       }
 
       float decay_scale = 0.12;
-      float top_light = 1.0 / (1.0 + pow(screen_down / decay_scale, 2.0));
-      float bottom_light = 1.0 / (1.0 + pow(v_uv.y / decay_scale, 2.0));
+      float top_light = (1.0 - smoothstep(0.15, 0.25, screen_down)) / (1.0 + pow(screen_down / decay_scale, 2.0));
+      float bottom_light = (1.0 - smoothstep(0.15, 0.25, v_uv.y)) / (1.0 + pow(v_uv.y / decay_scale, 2.0));
       float falloff = 1.0 - (1.0 - top_light) * (1.0 - bottom_light);
       vec3 filtered = clamp((light_sample.rgb * 3.2 - 0.5) * 1.12 + 0.5, 0.0, 1.0);
       out_color = vec4(filtered * falloff, falloff);
